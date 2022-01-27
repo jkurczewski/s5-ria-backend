@@ -9,6 +9,7 @@ use App\Http\Requests\UpdateAlcoholRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class AlcoholController extends Controller
 {
@@ -83,8 +84,12 @@ class AlcoholController extends Controller
             'alcohol_profile_smell' => 'required',
             'alcohol_profile_taste' => 'required',
             'alcohol_profile_finish' => 'required',
-            'alcohol_image_url' => 'required',
+            'alcohol_image_url' => 'required|image:jpeg,png,jpg,gif,svg|max:2048'
         ]);
+
+        $uploadFolder = 'images/alcohols';
+        $image = $request->file('image');
+        $image_uploaded_path = $image->store($uploadFolder, 'public');
 
         $alcohol = Alcohol::create([
             'alcohol_name' => $request->name,
@@ -93,7 +98,7 @@ class AlcoholController extends Controller
             'alcohol_profile_smell' => $request->profile_smell,
             'alcohol_profile_taste' => $request->profile_taste,
             'alcohol_profile_finish' => $request->profile_finish,
-            'alcohol_image_url' => $request->image_url,
+            'alcohol_image_url' => 'http://localhost:8000/storage/' . $image_uploaded_path
         ]);
 
         return response()->json(['Alcohol created successfully', $alcohol]);

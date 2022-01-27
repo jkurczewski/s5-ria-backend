@@ -9,6 +9,7 @@ use App\Http\Requests\UpdateBeverageRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class BeverageController extends Controller
 {
@@ -79,13 +80,17 @@ class BeverageController extends Controller
         $request -> validate([
             'beverage_name' => 'required',
             'beverage_flavour' => 'required',
-            'beverage_image_url' => 'required',
+            'image' => 'required|image:jpeg,png,jpg,gif,svg|max:2048'
         ]);
+
+        $uploadFolder = 'images/beverages';
+        $image = $request->file('image');
+        $image_uploaded_path = $image->store($uploadFolder, 'public');
 
         $beverage = Beverage::create([
             'beverage_name' => $request->name,
             'beverage_flavour' => $request->flavour,
-            'beverage_image_url' => $request->image_url,
+            'beverage_image_url' => 'http://localhost:8000/storage/' . $image_uploaded_path
         ]);
 
         // $passed_drinks = explode(',', $request->drinks);

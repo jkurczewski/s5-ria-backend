@@ -9,6 +9,7 @@ use App\Http\Requests\UpdateAdditionRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class AdditionController extends Controller
 {
@@ -46,7 +47,7 @@ class AdditionController extends Controller
             $additions_raw = $query->get()->toArray();
         }else{
             $additions_raw =
-                DB::table('alcohols')
+                DB::table('additions')
                 ->get()->toArray();
         }
 
@@ -78,12 +79,16 @@ class AdditionController extends Controller
     {
         $request -> validate([
             'addition_name' => 'required',
-            'addition_img_url' => 'required'
+            'addition_img_url' => 'required|image:jpeg,png,jpg,gif,svg|max:2048'
         ]);
+
+        $uploadFolder = 'images/drinks';
+        $image = $request->file('image');
+        $image_uploaded_path = $image->store($uploadFolder, 'public');
 
         $addition = Addition::create([
             'addition_name' => $request->name,
-            'addition_img_url' => $request->img
+            'addition_img_url' => 'http://localhost:8000/storage/' . $image_uploaded_path
         ]);
 
         return response()->json(['Addition created successfully', $addition]);

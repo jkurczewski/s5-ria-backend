@@ -11,14 +11,16 @@ use App\Http\Requests\UpdateDrinkRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class DrinkController extends Controller
 {
-    public function getUsableColumns($tables){
+    public function getUsableColumns($tables)
+    {
         $usable_cols = array();
 
         foreach ($tables as $table) {
-            $columns_raw = DB::select('describe '. $table);
+            $columns_raw = DB::select('describe ' . $table);
 
             foreach ($columns_raw as $column) {
                 if (Str::contains($column->Type, ['varchar', 'text'])) {
@@ -52,28 +54,28 @@ class DrinkController extends Controller
             ->leftJoin('alcohols', 'alcohol_in_drinks.alcohol_id', '=', 'alcohols.id')
             ->leftJoin('beverage_in_drinks', 'beverage_in_drinks.drink_id', '=', 'drinks.id')
             ->leftJoin('beverages', 'beverage_in_drinks.beverage_id', '=', 'beverages.id');
-            if (!empty($req) ) {
-                foreach ($req as $key => $value) {
-                    if( in_array($key, $searchavle_cols)) {
-                        $drinks_raw->where($key , 'LIKE', "%{$value}%");
-                    }else{
-                        $drinks_raw->where($key , '=', $value);
-                    }
+        if (!empty($req)) {
+            foreach ($req as $key => $value) {
+                if (in_array($key, $searchavle_cols)) {
+                    $drinks_raw->where($key, 'LIKE', "%{$value}%");
+                } else {
+                    $drinks_raw->where($key, '=', $value);
                 }
             }
-            $drinks_ids = $drinks_raw->get()->toArray();
+        }
+        $drinks_ids = $drinks_raw->get()->toArray();
 
         $drinks_query =
             DB::table('drinks')
             ->orderBy('drinks.id', 'asc');
-            if (!empty($drinks_ids) ) {
-                foreach ($drinks_ids as $key => $value) {
-                    $drinks_query->orWhere('drinks.id' , '=', $value->drink_id);
-                }
-                $empty_drinks = $drinks_query->get()->toArray();
-            }else{
-                return response()->json([]);
+        if (!empty($drinks_ids)) {
+            foreach ($drinks_ids as $key => $value) {
+                $drinks_query->orWhere('drinks.id', '=', $value->drink_id);
             }
+            $empty_drinks = $drinks_query->get()->toArray();
+        } else {
+            return response()->json([]);
+        }
 
 
         $drinks = array();
@@ -102,14 +104,42 @@ class DrinkController extends Controller
                 ->get()->toArray();
 
 
-                $ingredients = array('additions' => $additions, 'alcohols' => $alcohols, 'beverages' => $beverages);
-                $drink = (array)$drink;
-                $drink['ingredients'] = $ingredients;
-                array_push($drinks, $drink);
-       }
+            $ingredients = array('additions' => $additions, 'alcohols' => $alcohols, 'beverages' => $beverages);
+            $drink = (array)$drink;
+            $drink['ingredients'] = $ingredients;
+            array_push($drinks, $drink);
+        }
 
         return response()->json($drinks);
     }
+
+    // /**
+    //  * Store a newly created resource in storage.
+    //  *
+    //  * @param  \App\Http\Requests\Request  $request
+    //  * @return \Illuminate\Http\Response
+    //  */
+    // public function uploadImage(Request $request)
+    // {
+    //     $validator = $request->validate([
+    //         'image' => 'required|image:jpeg,png,jpg,gif,svg|max:2048'
+    //     ]);
+
+    //     if (!$validator) {
+    //         return response()->json([$validator,  'error', 500]);
+    //     }
+    //     $uploadFolder = 'images/drinks';
+    //     $image = $request->file('image');
+    //     $image_uploaded_path = $image->store($uploadFolder, 'public');
+    //     $uploadedImageResponse = array(
+    //         "image_name" => basename($image_uploaded_path),
+    //         "image_url" => Storage::disk('public')->url($image_uploaded_path),
+    //         "mime" => $image->getClientMimeType()
+    //     );
+    //     return response()->json(['File Uploaded Successfully', 'success',   200, $uploadedImageResponse]);
+    // }
+
+
 
     /**
      * Store a newly created resource in storage.
@@ -119,21 +149,26 @@ class DrinkController extends Controller
      */
     public function store(StoreDrinkRequest $request)
     {
-        $request -> validate([
+
+        $request->validate([
             'name' => 'required',
             'description' => 'required',
             'recipe' => 'required',
-            'image_url' => 'required',
+            'image' => 'required|image:jpeg,png,jpg,gif,svg|max:2048'
         ]);
+
+        $uploadFolder = 'images/drinks';
+        $image = $request->file('image');
+        $image_uploaded_path = $image->store($uploadFolder, 'public');
 
         $drink = Drink::create([
             'name' => $request->name,
             'description' => $request->description,
             'recipe' => $request->recipe,
-            'image_url' => $request->image_url
+            'image_url' => 'http://localhost:8000/storage/' . $image_uploaded_path
         ]);
 
-        if( isset($request->beverages) ){
+        if (isset($request->beverages)) {
             foreach (explode(',', $request->beverages) as $beverage) {
                 $beverage_parts = explode('-', $beverage);
                 BeverageInDrink::create([
@@ -145,7 +180,7 @@ class DrinkController extends Controller
             }
         }
 
-        if(isset($request->additions)){
+        if (isset($request->additions)) {
             foreach (explode(',', $request->additions) as $addition) {
                 $addition_parts = explode('-', $addition);
                 AdditionInDrink::create([
@@ -157,7 +192,7 @@ class DrinkController extends Controller
             }
         }
 
-        if(isset($request->alcohols)){
+        if (isset($request->alcohols)) {
             foreach (explode(',', $request->alcohols) as $alcohol) {
                 $alcohol_parts = explode('-', $alcohol);
                 AlcoholInDrink::create([
@@ -224,7 +259,7 @@ class DrinkController extends Controller
      */
     public function update(UpdateDrinkRequest $request, $id)
     {
-        $request -> validate([
+        $request->validate([
             'name' => 'required',
             'description' => 'required',
             'recipe' => 'required',
@@ -242,7 +277,7 @@ class DrinkController extends Controller
         AlcoholInDrink::where('drink_id', '=', $id)->delete();
         AdditionInDrink::where('drink_id', '=', $id)->delete();
 
-        if( isset($request->beverages) ){
+        if (isset($request->beverages)) {
             foreach (explode(',', $request->beverages) as $beverage) {
                 $beverage_parts = explode('-', $beverage);
                 BeverageInDrink::create([
@@ -254,7 +289,7 @@ class DrinkController extends Controller
             }
         }
 
-        if(isset($request->additions)){
+        if (isset($request->additions)) {
             foreach (explode(',', $request->additions) as $addition) {
                 $addition_parts = explode('-', $addition);
                 AdditionInDrink::create([
@@ -266,7 +301,7 @@ class DrinkController extends Controller
             }
         }
 
-        if(isset($request->alcohols)){
+        if (isset($request->alcohols)) {
             foreach (explode(',', $request->alcohols) as $alcohol) {
                 $alcohol_parts = explode('-', $alcohol);
                 AlcoholInDrink::create([

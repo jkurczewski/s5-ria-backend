@@ -4,7 +4,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdditionController;
 use App\Http\Controllers\AlcoholController;
-use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BeverageController;
 use App\Http\Controllers\DrinkController;
 use App\Http\Controllers\IngredientsTypes;

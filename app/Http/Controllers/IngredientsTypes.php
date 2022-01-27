@@ -10,20 +10,20 @@ class IngredientsTypes extends Controller
     public function index()
     {
         $additions =
-        DB::table('additions')
-            ->select(DB::raw('DISTINCT(addition_name)'))
+            DB::table('additions')
+            ->select(DB::raw('addition_name, id'))
             ->orderBy('addition_name', 'asc')
             ->get()->toArray();
 
         $alcohols =
-        DB::table('alcohols')
-            ->select(DB::raw('DISTINCT(alcohol_name)'))
+            DB::table('alcohols')
+            ->select(DB::raw('alcohol_name, id'))
             ->orderBy('alcohol_name', 'asc')
             ->get()->toArray();
 
         $beverages =
-        DB::table('beverages')
-            ->select(DB::raw('DISTINCT(beverage_name)'))
+            DB::table('beverages')
+            ->select(DB::raw('beverage_name, id'))
             ->orderBy('beverage_name', 'asc')
             ->get()->toArray();
 
