@@ -13,7 +13,8 @@ use Illuminate\Support\Facades\Storage;
 
 class AdditionController extends Controller
 {
-    public function getUsableColumns(){
+    public function getUsableColumns()
+    {
         $columns_raw = DB::select('describe additions');
         $usable_cols = array();
 
@@ -35,17 +36,17 @@ class AdditionController extends Controller
     {
         $searchable_cols = $this->getUsableColumns();
 
-        if (!empty($request->all()) ) {
-            $query= DB::table('additions');
+        if (!empty($request->all())) {
+            $query = DB::table('additions');
             foreach ($request->all() as $key => $value) {
-                if( in_array($key, $searchable_cols)) {
-                    $query->where($key , 'LIKE', "%{$value}%");
-                }else{
-                    $query->where($key , '=', $value);
+                if (in_array($key, $searchable_cols)) {
+                    $query->where($key, 'LIKE', "%{$value}%");
+                } else {
+                    $query->where($key, '=', $value);
                 }
             }
             $additions_raw = $query->get()->toArray();
-        }else{
+        } else {
             $additions_raw =
                 DB::table('additions')
                 ->get()->toArray();
@@ -64,7 +65,7 @@ class AdditionController extends Controller
             $item = (array)$item;
             $item['related_drinks'] = $drinks;
             array_push($items, $item);
-       }
+        }
 
         return response()->json($items);
     }
@@ -77,18 +78,18 @@ class AdditionController extends Controller
      */
     public function store(StoreAdditionRequest $request)
     {
-        $request -> validate([
+        $request->validate([
             'addition_name' => 'required',
-            'addition_img_url' => 'required|image:jpeg,png,jpg,gif,svg|max:2048'
+            'addition_image_url' => 'required|image:jpeg,png,jpg|max:2048'
         ]);
 
-        $uploadFolder = 'images/drinks';
-        $image = $request->file('image');
+        $uploadFolder = 'images/additions';
+        $image = $request->file('addition_image_url');
         $image_uploaded_path = $image->store($uploadFolder, 'public');
 
         $addition = Addition::create([
-            'addition_name' => $request->name,
-            'addition_img_url' => 'http://localhost:8000/storage/' . $image_uploaded_path
+            'addition_name' => $request->addition_name,
+            'addition_image_url' => 'http://localhost:8000/storage/' . $image_uploaded_path
         ]);
 
         return response()->json(['Addition created successfully', $addition]);
@@ -103,20 +104,20 @@ class AdditionController extends Controller
     public function show($id)
     {
         $addition = DB::table('additions')
-        ->where('additions.id', '=', $id)
-        ->orderBy('additions.id', 'asc')
-        ->get();
+            ->where('additions.id', '=', $id)
+            ->orderBy('additions.id', 'asc')
+            ->get();
 
         if (is_null($addition)) {
             return response()->json('Data not found', 404);
         }
 
         $drinks =
-        DB::table('drinks')
-        ->join('addition_in_drinks', 'addition_in_drinks.drink_id', '=', 'drinks.id')
-        ->where('addition_in_drinks.addition_id', '=', $id)
-        ->orderBy('drinks.name', 'asc')
-        ->get()->toArray();
+            DB::table('drinks')
+            ->join('addition_in_drinks', 'addition_in_drinks.drink_id', '=', 'drinks.id')
+            ->where('addition_in_drinks.addition_id', '=', $id)
+            ->orderBy('drinks.name', 'asc')
+            ->get()->toArray();
 
         $addition['related_drinks'] = $drinks;
 
@@ -132,15 +133,22 @@ class AdditionController extends Controller
      */
     public function update(UpdateAdditionRequest $request, $id)
     {
-        $request -> validate([
-            'addition_name' => 'required',
-            'addition_img_url' => 'required'
+        $request->validate([
+            'addition_image_url' => 'image:jpeg,png,jpg|max:2048'
         ]);
 
         $addition = Addition::find($id);
 
         $addition->addition_name = $request->addition_name;
-        $addition->addition_img_url = $request->addition_img_url;
+
+        if ($request->file('addition_image_url')) {
+            $uploadFolder = 'images/additions';
+            $image = $request->file('addition_image_url');
+            $image_uploaded_path = $image->store($uploadFolder, 'public');
+            $addition->addition_img_url = 'http://localhost:8000/storage/' . $image_uploaded_path;
+        }
+
+        $addition->save();
 
         return response()->json(['addition updated successfully', $addition]);
     }
@@ -155,7 +163,7 @@ class AdditionController extends Controller
     {
         $addition = Addition::find($id);
 
-        if($addition_in_drink = AdditionInDrink::where('addition_id', '=', $id)->firstOrFail()) {
+        if ($addition_in_drink = AdditionInDrink::where('addition_id', '=', $id)->firstOrFail()) {
             return response()->json(['Addition connected with Drink. Delete connection to free the addition', $addition_in_drink], 404);
         }
 

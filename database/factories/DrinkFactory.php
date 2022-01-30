@@ -17,8 +17,7 @@ class DrinkFactory extends Factory
             'name' => $this->faker->name(),
             'description' =>  $this->faker->text(300),
             'recipe' => $this->faker->text(300),
-            'image_url' =>$this->faker->image('./resources/drinks', '400', '400', 'cats', false),
+            'image_url' => '',
         ];
     }
 }
-

@@ -17,8 +17,7 @@ class BeverageFactory extends Factory
         return [
             'beverage_name' => $this->faker->name(),
             'beverage_flavour' => $this->faker->sentence(6, true),
-            'beverage_image_url' =>$this->faker->image('./resources/beverages', '400', '400', 'cats', false),
+            'beverage_image_url' => '',
         ];
-
     }
 }

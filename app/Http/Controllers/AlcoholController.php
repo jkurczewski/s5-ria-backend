@@ -13,7 +13,8 @@ use Illuminate\Support\Facades\Storage;
 
 class AlcoholController extends Controller
 {
-    public function getUsableColumns(){
+    public function getUsableColumns()
+    {
         $columns_raw = DB::select('describe alcohols');
         $usable_cols = array();
 
@@ -35,17 +36,17 @@ class AlcoholController extends Controller
     {
         $searchable_cols = $this->getUsableColumns();
 
-        if (!empty($request->all()) ) {
-            $query= DB::table('alcohols');
+        if (!empty($request->all())) {
+            $query = DB::table('alcohols');
             foreach ($request->all() as $key => $value) {
-                if( in_array($key, $searchable_cols)) {
-                    $query->where($key , 'LIKE', "%{$value}%");
-                }else{
-                    $query->where($key , '=', $value);
+                if (in_array($key, $searchable_cols)) {
+                    $query->where($key, 'LIKE', "%{$value}%");
+                } else {
+                    $query->where($key, '=', $value);
                 }
             }
             $alcohols_raw = $query->get()->toArray();
-        }else{
+        } else {
             $alcohols_raw =
                 DB::table('alcohols')
                 ->get()->toArray();
@@ -64,7 +65,7 @@ class AlcoholController extends Controller
             $item = (array)$item;
             $item['related_drinks'] = $drinks;
             array_push($items, $item);
-       }
+        }
 
         return response()->json($items);
     }
@@ -77,27 +78,27 @@ class AlcoholController extends Controller
      */
     public function store(StoreAlcoholRequest $request)
     {
-        $request -> validate([
+        $request->validate([
             'alcohol_name' => 'required',
             'alcohol_type' => 'required',
             'alcohol_strength' => 'required',
             'alcohol_profile_smell' => 'required',
             'alcohol_profile_taste' => 'required',
             'alcohol_profile_finish' => 'required',
-            'alcohol_image_url' => 'required|image:jpeg,png,jpg,gif,svg|max:2048'
+            'alcohol_image_url' => 'required|image:jpeg,png,jpg|max:2048'
         ]);
 
         $uploadFolder = 'images/alcohols';
-        $image = $request->file('image');
+        $image = $request->file('alcohol_image_url');
         $image_uploaded_path = $image->store($uploadFolder, 'public');
 
         $alcohol = Alcohol::create([
-            'alcohol_name' => $request->name,
-            'alcohol_type' => $request->type,
-            'alcohol_strength' => $request->strength,
-            'alcohol_profile_smell' => $request->profile_smell,
-            'alcohol_profile_taste' => $request->profile_taste,
-            'alcohol_profile_finish' => $request->profile_finish,
+            'alcohol_name' => $request->alcohol_name,
+            'alcohol_type' => $request->alcohol_type,
+            'alcohol_strength' => $request->alcohol_strength,
+            'alcohol_profile_smell' => $request->alcohol_profile_smell,
+            'alcohol_profile_taste' => $request->alcohol_profile_taste,
+            'alcohol_profile_finish' => $request->alcohol_profile_finish,
             'alcohol_image_url' => 'http://localhost:8000/storage/' . $image_uploaded_path
         ]);
 
@@ -113,20 +114,20 @@ class AlcoholController extends Controller
     public function show($id)
     {
         $alcohol = DB::table('alcohols')
-        ->where('alcohols.id', '=', $id)
-        ->orderBy('alcohols.id', 'asc')
-        ->get();
+            ->where('alcohols.id', '=', $id)
+            ->orderBy('alcohols.id', 'asc')
+            ->get();
 
         if (is_null($alcohol)) {
             return response()->json('Data not found', 404);
         }
 
         $drinks =
-        DB::table('drinks')
-        ->join('alcohol_in_drinks', 'alcohol_in_drinks.drink_id', '=', 'drinks.id')
-        ->where('alcohol_in_drinks.alcohol_id', '=', $id)
-        ->orderBy('drinks.name', 'asc')
-        ->get()->toArray();
+            DB::table('drinks')
+            ->join('alcohol_in_drinks', 'alcohol_in_drinks.drink_id', '=', 'drinks.id')
+            ->where('alcohol_in_drinks.alcohol_id', '=', $id)
+            ->orderBy('drinks.name', 'asc')
+            ->get()->toArray();
 
         $alcohol['related_drinks'] = $drinks;
 
@@ -142,14 +143,8 @@ class AlcoholController extends Controller
      */
     public function update(UpdateAlcoholRequest $request, $id)
     {
-        $request -> validate([
-            'alcohol_name' => 'required',
-            'alcohol_type' => 'required',
-            'alcohol_strength' => 'required',
-            'alcohol_profile_smell' => 'required',
-            'alcohol_profile_taste' => 'required',
-            'alcohol_profile_finish' => 'required',
-            'alcohol_image_url' => 'required',
+        $request->validate([
+            'addition_image_url' => 'image:jpeg,png,jpg|max:2048'
         ]);
 
         $alcohol = Alcohol::find($id);
@@ -160,7 +155,15 @@ class AlcoholController extends Controller
         $alcohol->alcohol_profile_smell = $request->alcohol_profile_smell;
         $alcohol->alcohol_profile_taste = $request->alcohol_profile_taste;
         $alcohol->alcohol_profile_finish = $request->alcohol_profile_finish;
-        $alcohol->alcohol_image_url = $request->alcohol_image_url;
+
+        if ($request->file('alcohol_image_url')) {
+            $uploadFolder = 'images/alcohols';
+            $image = $request->file('alcohol_image_url');
+            $image_uploaded_path = $image->store($uploadFolder, 'public');
+            $alcohol->alcohol_img_url = 'http://localhost:8000/storage/' . $image_uploaded_path;
+        }
+
+        $alcohol->save();
 
         return response()->json(['Alcohol updated successfully', $alcohol]);
     }
@@ -175,7 +178,7 @@ class AlcoholController extends Controller
     {
         $alcohol = Alcohol::find($id);
 
-        if($alcohol_in_drink = AlcoholInDrink::where('alcohol_id', '=', $id)->firstOrFail()) {
+        if ($alcohol_in_drink = AlcoholInDrink::where('alcohol_id', '=', $id)->firstOrFail()) {
             return response()->json(['Alcohol connected with Drink. Delete connection to free the alcohol', $alcohol_in_drink], 404);
         }
 

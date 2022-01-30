@@ -14,9 +14,9 @@ class CreateAdditionsTable extends Migration
     public function up()
     {
         Schema::create('additions', function (Blueprint $table) {
-            $table->increments('id');
+            $table->increments('id')->unsigned();
             $table->string('addition_name');
-            $table->string('addition_img_url');
+            $table->string('addition_image_url');
             $table->timestamps();
         });
     }

@@ -15,7 +15,7 @@ class AdditionFactory extends Factory
     {
         return [
             'addition_name' => $this->faker->name(),
-            'addition_img_url' =>$this->faker->image('./resources/additions', '400', '400', 'cats', false),
+            'addition_image_url' => '',
         ];
     }
 }

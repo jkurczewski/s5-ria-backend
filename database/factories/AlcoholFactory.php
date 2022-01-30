@@ -21,11 +21,10 @@ class AlcoholFactory extends Factory
             'alcohol_name' => $this->faker->name(),
             'alcohol_type' =>  Arr::random($types),
             'alcohol_strength' => Arr::random($strengths),
-            'alcohol_profile_smell' => $this->faker->sentence(6, true) ,
-            'alcohol_profile_taste' => $this->faker->sentence(6, true) ,
-            'alcohol_profile_finish' => $this->faker->sentence(6,true) ,
-            'alcohol_image_url' =>$this->faker->image('./resources/alcohols', '400', '400', 'cats', false),
+            'alcohol_profile_smell' => $this->faker->sentence(6, true),
+            'alcohol_profile_taste' => $this->faker->sentence(6, true),
+            'alcohol_profile_finish' => $this->faker->sentence(6, true),
+            'alcohol_image_url' => '',
         ];
     }
 }
-

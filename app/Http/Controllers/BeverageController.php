@@ -13,7 +13,8 @@ use Illuminate\Support\Facades\Storage;
 
 class BeverageController extends Controller
 {
-    public function getUsableColumns(){
+    public function getUsableColumns()
+    {
         $columns_raw = DB::select('describe beverages');
         $usable_cols = array();
 
@@ -35,17 +36,17 @@ class BeverageController extends Controller
     {
         $searchable_cols = $this->getUsableColumns();
 
-        if (!empty($request->all()) ) {
-            $query= DB::table('beverages');
+        if (!empty($request->all())) {
+            $query = DB::table('beverages');
             foreach ($request->all() as $key => $value) {
-                if( in_array($key, $searchable_cols)) {
-                    $query->where($key , 'LIKE', "%{$value}%");
-                }else{
-                    $query->where($key , '=', $value);
+                if (in_array($key, $searchable_cols)) {
+                    $query->where($key, 'LIKE', "%{$value}%");
+                } else {
+                    $query->where($key, '=', $value);
                 }
             }
             $beverages_raw = $query->get()->toArray();
-        }else{
+        } else {
             $beverages_raw =
                 DB::table('beverages')
                 ->get()->toArray();
@@ -64,7 +65,7 @@ class BeverageController extends Controller
             $item = (array)$item;
             $item['related_drinks'] = $drinks;
             array_push($items, $item);
-       }
+        }
 
         return response()->json($items);
     }
@@ -77,34 +78,21 @@ class BeverageController extends Controller
      */
     public function store(StoreBeverageRequest $request)
     {
-        $request -> validate([
+        $request->validate([
             'beverage_name' => 'required',
             'beverage_flavour' => 'required',
-            'image' => 'required|image:jpeg,png,jpg,gif,svg|max:2048'
+            'beverage_image_url' => 'required|image:jpeg,png,jpg|max:2048'
         ]);
 
         $uploadFolder = 'images/beverages';
-        $image = $request->file('image');
+        $image = $request->file('beverage_image_url');
         $image_uploaded_path = $image->store($uploadFolder, 'public');
 
         $beverage = Beverage::create([
-            'beverage_name' => $request->name,
-            'beverage_flavour' => $request->flavour,
+            'beverage_name' => $request->beverage_name,
+            'beverage_flavour' => $request->beverage_flavour,
             'beverage_image_url' => 'http://localhost:8000/storage/' . $image_uploaded_path
         ]);
-
-        // $passed_drinks = explode(',', $request->drinks);
-
-        // if($passed_drinks){
-        //     foreach ($passed_drinks as $drink) {
-        //         BeverageInDrink::create([
-        //             'drink_id' => $drink,
-        //             'beverage_id' => $beverage->id,
-        //             'beverage_unit' => 'ml',
-        //             'beverage_amount' => 0
-        //         ]);
-        //     }
-        // }
 
         return response()->json(['Beverage created successfully', $beverage]);
     }
@@ -118,9 +106,9 @@ class BeverageController extends Controller
     public function show($id)
     {
         $beverage = DB::table('beverages')
-        ->orderBy('beverages.id', 'asc')
-        ->where('beverages.id', '=', $id)
-        ->get();
+            ->orderBy('beverages.id', 'asc')
+            ->where('beverages.id', '=', $id)
+            ->get();
 
         if (is_null($beverage)) {
             return response()->json('Data not found', 404);
@@ -147,17 +135,23 @@ class BeverageController extends Controller
      */
     public function update(UpdateBeverageRequest $request, $id)
     {
-        $request -> validate([
-            'beverage_name' => 'required',
-            'beverage_flavour' => 'required',
-            'beverage_image_url' => 'required',
+        $request->validate([
+            'beverage_image_url' => 'image:jpeg,png,jpg|max:2048'
         ]);
 
         $beverage = Beverage::find($id);
 
         $beverage->beverage_name = $request->beverage_name;
         $beverage->beverage_flavour = $request->beverage_flavour;
-        $beverage->beverage_image_url = $request->beverage_image_url;
+
+        if ($request->file('beverage_image_url')) {
+            $uploadFolder = 'images/beverages';
+            $image = $request->file('beverage_image_url');
+            $image_uploaded_path = $image->store($uploadFolder, 'public');
+            $beverage->beverage_img_url = 'http://localhost:8000/storage/' . $image_uploaded_path;
+        }
+
+        $beverage->save();
 
         return response()->json(['Beverage updated successfully', $beverage]);
     }
@@ -172,7 +166,7 @@ class BeverageController extends Controller
     {
         $beverage = Beverage::find($id);
 
-        if($beverage_in_drink = BeverageInDrink::where('beverage_id', '=', $id)->firstOrFail()) {
+        if ($beverage_in_drink = BeverageInDrink::where('beverage_id', '=', $id)->firstOrFail()) {
             return response()->json(['Beverage connected with Drink. Delete connection to free the beverage', $beverage_in_drink], 404);
         }
 
