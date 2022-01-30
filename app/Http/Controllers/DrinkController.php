@@ -260,10 +260,7 @@ class DrinkController extends Controller
     public function update(UpdateDrinkRequest $request, $id)
     {
         $request->validate([
-            'name' => 'required',
-            'description' => 'required',
-            'recipe' => 'required',
-            'image_url' => 'required',
+            'image_url' => 'image:jpeg,png,jpg|max:2048'
         ]);
 
         $drink = Drink::find($id);
@@ -271,7 +268,13 @@ class DrinkController extends Controller
         $drink->name = $request->name;
         $drink->description = $request->description;
         $drink->recipe = $request->recipe;
-        $drink->image_url = $request->image_url;
+
+        if ($request->file('image_url')) {
+            $uploadFolder = 'images/drinks';
+            $image = $request->file('image_url');
+            $image_uploaded_path = $image->store($uploadFolder, 'public');
+            $drink->image_url = 'http://localhost:8000/storage/' . $image_uploaded_path;
+        }
 
         BeverageInDrink::where('drink_id', '=', $id)->delete();
         AlcoholInDrink::where('drink_id', '=', $id)->delete();
@@ -312,6 +315,8 @@ class DrinkController extends Controller
                 ]);
             }
         }
+
+        $drink->save();
 
         return response()->json(['Drink updated successfully', $drink]);
     }
