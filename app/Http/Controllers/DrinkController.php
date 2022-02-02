@@ -47,7 +47,7 @@ class DrinkController extends Controller
         $drinks_raw =
             DB::table('drinks')
             ->select(DB::raw('DISTINCT(drinks.id) as drink_id'))
-            ->orderBy('drinks.id', 'asc')
+            ->orderBy('drinks.name', 'asc')
             ->leftJoin('addition_in_drinks', 'addition_in_drinks.drink_id', '=', 'drinks.id')
             ->leftJoin('additions', 'addition_in_drinks.addition_id', '=', 'additions.id')
             ->leftJoin('alcohol_in_drinks', 'alcohol_in_drinks.drink_id', '=', 'drinks.id')
@@ -154,11 +154,11 @@ class DrinkController extends Controller
             'name' => 'required',
             'description' => 'required',
             'recipe' => 'required',
-            'image' => 'required|image:jpeg,png,jpg,gif,svg|max:2048'
+            'image_url' => 'required|image:jpeg,png,jpg|max:2048'
         ]);
 
         $uploadFolder = 'images/drinks';
-        $image = $request->file('image');
+        $image = $request->file('image_url');
         $image_uploaded_path = $image->store($uploadFolder, 'public');
 
         $drink = Drink::create([

@@ -12,6 +12,7 @@ class AdditionFactory extends Factory
      * @return array
      */
     public function definition()
+
     {
         return [
             'addition_name' => $this->faker->name(),

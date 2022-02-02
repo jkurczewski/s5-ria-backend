@@ -49,6 +49,7 @@ class AdditionController extends Controller
         } else {
             $additions_raw =
                 DB::table('additions')
+                ->orderBy('additions.addition_name', 'asc')
                 ->get()->toArray();
         }
 

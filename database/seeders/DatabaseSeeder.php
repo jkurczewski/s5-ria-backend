@@ -20,34 +20,8 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        Drink::factory()
-        ->count(50)
-        ->create();
-
-        Beverage::factory()
-        ->count(50)
-        ->create();
-
-        Alcohol::factory()
-        ->count(50)
-        ->create();
-
-        Addition::factory()
-        ->count(50)
-        ->create();
-
-        BeverageInDrink::factory()
-        ->count(100)
-        ->create();
-
-        AlcoholInDrink::factory()
-        ->count(100)
-        ->create();
-
-        AdditionInDrink::factory()
-        ->count(100)
-        ->create();
-
-
+        $this->call(AdditionSeeder::class);
+        $this->call(AlcoholSeeder::class);
+        $this->call(BeverageSeeder::class);
     }
 }

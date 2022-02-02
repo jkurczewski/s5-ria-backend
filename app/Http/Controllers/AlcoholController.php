@@ -49,6 +49,7 @@ class AlcoholController extends Controller
         } else {
             $alcohols_raw =
                 DB::table('alcohols')
+                ->orderBy('alcohols.alcohol_name', 'asc')
                 ->get()->toArray();
         }
 

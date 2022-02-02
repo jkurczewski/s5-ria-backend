@@ -17,8 +17,8 @@ class IngredientsTypes extends Controller
 
         $alcohols =
             DB::table('alcohols')
-            ->select(DB::raw('alcohol_name, id'))
-            ->orderBy('alcohol_name', 'asc')
+            ->select(DB::raw('alcohol_name, id, alcohol_type'))
+            ->orderBy('alcohol_type', 'asc')
             ->get()->toArray();
 
         $beverages =
